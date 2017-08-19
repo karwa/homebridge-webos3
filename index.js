@@ -1,5 +1,6 @@
 var lgtv, Service, Characteristic;
 var wol = require('wake_on_lan');
+const cec = require('cec-promise');
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
@@ -16,6 +17,7 @@ function webos3Accessory(log, config, api) {
   this.url = 'ws://' + this.ip + ':3000';
   this.keyFile = config['keyFile'];
   this.connected = false;
+  this.wakeWithCEC = config['wakeWithCEC'];
   this.checkCount = 0;
 
   lgtv = require('lgtv2')({
@@ -103,12 +105,19 @@ webos3Accessory.prototype.checkWakeOnLan = function(callback) {
 webos3Accessory.prototype.setState = function(state, callback) {
   if (state) {
     if (!this.connected) {
-      var self = this;
-      wol.wake(this.mac, function(error) {
-        if (error) return callback(new Error('webOS3 wake on lan error'));
-        this.checkCount = 0;
-        setTimeout(self.checkWakeOnLan.bind(self, callback), 5000);
-      })
+      if (this.wakeWithCEC) {
+	      // Attempt to wake via CEC.
+	      cec.send("on 0");
+	      return callback(null, true);
+      } else {
+		  // Attempt to wake via WOL.      
+	      var self = this;
+	      wol.wake(this.mac, function(error) {
+	        if (error) return callback(new Error('webOS3 wake on lan error'));
+	        this.checkCount = 0;
+	        setTimeout(self.checkWakeOnLan.bind(self, callback), 5000);
+	      })
+      }
     } else {
       return callback(null, true);
     }
