@@ -108,13 +108,7 @@ webos3Accessory.prototype.setState = function(state, callback) {
       if (this.wakeWithCEC) {
 	      // Attempt to wake via CEC.
 	      this.log("webOS3 Attempting to wake via CEC");
-	      cec.ready
-	      .then(function () {
-  	        cec.send("on 0");		      
-	      })
-	      .catch(function (err) {
-		     this.log("cec error: err");
-	      });
+  	      cec.send("on 0");
 	      return callback(null, true);
       } else {
 		  // Attempt to wake via WOL.      
